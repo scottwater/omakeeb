@@ -596,7 +596,7 @@ class Window(Gtk.ApplicationWindow):
     def fill_shortcuts(self, query):
         """Desktop bindings keep a detailed row layout; their chords are hard to read as key legends."""
         for item in self.shortcuts:
-            if query.lower() not in f"{item.label} {item.category} {item.chord}".lower():
+            if item.keycode is None or query.lower() not in f"{item.label} {item.category} {item.chord}".lower():
                 continue
             row = box(css="card")
             info = box(True,4); info.set_hexpand(True)
@@ -604,8 +604,7 @@ class Window(Gtk.ApplicationWindow):
             info.append(label(f"{item.category} · {item.chord}","muted"))
             row.append(info)
             b = button("Assign", lambda value=item.keycode:self.assign_code(value))
-            b.set_sensitive(item.keycode is not None)
-            b.set_tooltip_text(item.source if item.keycode is not None else "This binding cannot be represented by a single QMK keycode.")
+            b.set_tooltip_text(item.source)
             row.append(b); self.shortcut_rows.append(row)
 
     def macro_protocol(self):
