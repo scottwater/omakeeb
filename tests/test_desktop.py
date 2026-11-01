@@ -48,6 +48,7 @@ class ShortcutTests(unittest.TestCase):
         self.assertEqual(shortcut_keycode((), 'F24'), 115)
         self.assertEqual(shortcut_keycode(('SUPER',), 'XF86AudioRaiseVolume'), 0x08a9)
         self.assertIsNone(shortcut_keycode((), 'XF86AudioMicMute'))
+        self.assertEqual(shortcut_keycode((), 'XF86Calculator'), 0xb2)
         self.assertEqual(shortcut_keycode(('SUPER',), '', 10), 0x081e)
         self.assertEqual(shortcut_keycode(('SUPER','SHIFT'), '', 201), 0x0a72)
 
