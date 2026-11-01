@@ -12,7 +12,9 @@ import sys
 import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Gdk", "4.0")
-from gi.repository import Gdk, Gio, GLib, Gtk
+gi.require_version("Pango", "1.0")
+gi.require_version("PangoCairo", "1.0")
+from gi.repository import Gdk, Gio, GLib, Gtk, Pango, PangoCairo
 
 from . import __version__, keycodes, macros
 from .definitions import Catalog, demo_definition, load_definition, layout_choices, unpack_layout_options, pack_layout_options
@@ -156,14 +158,17 @@ class KeyboardCanvas(Gtk.DrawingArea):
             cr.set_line_width(1)
             cr.stroke()
             cr.set_source_rgb(*color("background" if selected or tested else "foreground", "#a9b1d6"))
-            cr.select_font_face("sans-serif", 0, 0)
             title = w.key_label(code)
             if len(title) > 11:
                 title = title[:10] + "…"
-            cr.set_font_size(min(13, unit * .24))
-            ext = cr.text_extents(title)
-            cr.move_to(x+(kw-ext.width)/2-ext.x_bearing, y+kh/2-ext.y_bearing/2)
-            cr.show_text(title)
+            # Pango, unlike Cairo's toy text API, falls back to fonts with ▽ and other symbols.
+            layout = self.create_pango_layout(title)
+            font = Pango.FontDescription.from_string("sans-serif")
+            font.set_absolute_size(min(13, unit * .24) * Pango.SCALE)
+            layout.set_font_description(font)
+            _ink, extent = layout.get_pixel_extents()
+            cr.move_to(x+(kw-extent.width)/2, y+(kh-extent.height)/2)
+            PangoCairo.show_layout(cr, layout)
             if changed:
                 cr.set_source_rgb(*color("background" if selected else "accent", "#7aa2f7"))
                 cr.arc(x+kw-7,y+7,2.2,0,math.pi*2)
