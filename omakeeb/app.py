@@ -19,7 +19,7 @@ from gi.repository import Gdk, Gio, GLib, Gtk, Pango, PangoCairo
 from . import __version__, keycodes, macros
 from .definitions import Catalog, demo_definition, load_definition, layout_choices, unpack_layout_options, pack_layout_options
 from .geometry import place_keys, hit_test
-from .desktop import load_theme, discover_shortcuts
+from .desktop import load_theme, discover_shortcuts, shortcut_keycode
 from .model import Draft, demo_snapshot
 
 
@@ -73,6 +73,7 @@ def padded(widget, value=24):
 
 
 OMARCHY_LOGO = "\ue900"  # Logo glyph in the font Omarchy installs as "omarchy".
+SUPER_SPACE = shortcut_keycode(("SUPER",), "SPACE")
 
 
 class KeyboardCanvas(Gtk.DrawingArea):
@@ -184,7 +185,7 @@ class KeyboardCanvas(Gtk.DrawingArea):
             cr.set_line_width(2 if shortcut else 1)
             cr.stroke()
             cr.set_source_rgb(*color("background" if selected or tested else "foreground", "#a9b1d6"))
-            logo = w.logo_font and shortcut and shortcut.label.casefold() == "omarchy menu"
+            logo = w.logo_font and code == SUPER_SPACE
             # Pango, unlike Cairo's toy text API, falls back to fonts with ▽ and other symbols.
             layout = self.create_pango_layout(OMARCHY_LOGO if logo else shortcut.label if shortcut else w.key_label(code))
             font = Pango.FontDescription.from_string("omarchy" if logo else "sans-serif")
