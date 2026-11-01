@@ -287,7 +287,6 @@ class Window(Gtk.ApplicationWindow):
         side.set_size_request(206, -1)
         brand = padded(box(True, 8), 24)
         brand.append(label("⌨  omakeeb", "brand"))
-        brand.append(label("YOUR KEYBOARD, AT HOME", "eyebrow"))
         side.append(brand)
         self.nav_buttons = {}
         sections = [("Keymap","input-keyboard-symbolic"), ("Omarchy","starred-symbolic"), ("Macros","view-list-symbolic"), ("Lighting","display-brightness-symbolic"), ("Encoders","view-refresh-symbolic"), ("Advanced","preferences-system-symbolic"), ("Test keys","object-select-symbolic"), ("Backups","document-save-symbolic")]
@@ -301,8 +300,6 @@ class Window(Gtk.ApplicationWindow):
         spacer.set_vexpand(True)
         side.append(spacer)
         bottom = padded(box(True, 9), 20)
-        bottom.append(label("LOCAL FIRST", "eyebrow"))
-        bottom.append(label("Changes stay in your draft\nuntil you review and apply.", "muted", True))
         bottom.append(button("Keyboard library", self.library_dialog, icon="folder-symbolic"))
         bottom.append(label(f"Omakeeb {__version__} · GTK 4", "small"))
         side.append(bottom)
