@@ -323,7 +323,10 @@ class Window(Gtk.ApplicationWindow):
         .warning {{ color: {c.get('yellow', '#e0af68')}; }}
         separator {{ background: {muted}; min-height: 1px; }}
         """
-        self.provider.load_from_string(css)
+        if hasattr(self.provider, "load_from_string"):
+            self.provider.load_from_string(css)
+        else:  # GTK 4.10 predates load_from_string.
+            self.provider.load_from_data(css, -1)
         if hasattr(self, "canvas"):
             self.canvas.queue_draw()
         return True
