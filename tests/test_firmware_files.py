@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 from omakeeb.firmware_files import archive_firmware, verify_archive, FirmwareArchiveError
+from omakeeb.safety import BackupStore
 
 
 class FirmwareFilesTests(unittest.TestCase):
@@ -73,6 +74,30 @@ class FirmwareFilesTests(unittest.TestCase):
         with self.assertRaisesRegex(FirmwareArchiveError,'private'):
             archive_firmware(self.source,self.archive)
         self.assertEqual(self.archive.stat().st_mode & 0o777,0o755)
+
+    def test_default_archive_keeps_shared_backup_directory_private(self):
+        data = self.root/'data'
+        backups = data/'omakeeb/backups'
+        old_umask = os.umask(0o022)
+        try:
+            with patch.dict(os.environ,{'XDG_DATA_HOME':str(data)}):
+                verify_archive(archive_firmware(self.source))
+                BackupStore().save({'identity':{}},{})
+        finally:
+            os.umask(old_umask)
+        self.assertEqual(backups.stat().st_mode & 0o777,0o700)
+        self.assertEqual((backups/'firmware').stat().st_mode & 0o777,0o700)
+
+    def test_default_archive_rejects_public_backup_directory_and_does_not_chmod_it(self):
+        data = self.root/'data'
+        backups = data/'omakeeb/backups'
+        backups.mkdir(parents=True)
+        backups.chmod(0o755)
+        with patch.dict(os.environ,{'XDG_DATA_HOME':str(data)}):
+            with self.assertRaisesRegex(FirmwareArchiveError,'private'):
+                archive_firmware(self.source)
+        self.assertEqual(backups.stat().st_mode & 0o777,0o755)
+        self.assertFalse((backups/'firmware').exists())
 
 
 if __name__ == '__main__':

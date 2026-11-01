@@ -32,10 +32,18 @@ def archive_firmware(source, directory=None, identity=None) -> Path:
     suffix = source.suffix.lower()
     if suffix not in (".bin", ".hex", ".uf2", ".zip"):
         raise FirmwareArchiveError("Choose a manufacturer's .bin, .hex, .uf2 or .zip firmware file.")
-    directory = Path(directory) if directory is not None else default_backup_dir() / "firmware"
     temporary = None
     manifest_temporary = None
     try:
+        if directory is None:
+            # mkdir(parents=True) applies the umask to parents, so create the
+            # shared backup directory privately before its firmware child.
+            backups = default_backup_dir()
+            backups.mkdir(parents=True, exist_ok=True, mode=0o700)
+            if backups.stat().st_mode & 0o077:
+                raise FirmwareArchiveError(f"Backup directory must be private (chmod 700): {backups}")
+            directory = backups / "firmware"
+        directory = Path(directory)
         directory.mkdir(parents=True, exist_ok=True, mode=0o700)
         if directory.stat().st_mode & 0o077:
             raise FirmwareArchiveError(f"Firmware archive directory must be private (chmod 700): {directory}")
