@@ -2,6 +2,10 @@
 
 Omakeeb is a native GTK 4 application for configuring QMK keyboards on Omarchy. It uses the current Omarchy palette, discovers your live Hyprland shortcuts, and keeps edits in a local draft until you review and apply them.
 
+| Keymap editor | Omarchy shortcuts as single keys |
+| --- | --- |
+| ![Keymap page with three keys remapped to Omarchy shortcuts](docs/screenshots/keymap.png) | ![Omarchy key group listing Hyprland bindings to assign](docs/screenshots/omarchy-shortcuts.png) |
+
 The app talks directly to VIA- and Vial-enabled firmware through the system HID library. It includes an offline VIA definition catalog, so supported keyboards do not need a downloaded layout JSON or a browser connection. Python 3.11 and GTK 4.10 or newer are required. Python's standard library handles the application logic; GTK and HID access use system packages.
 
 ## Run or install
