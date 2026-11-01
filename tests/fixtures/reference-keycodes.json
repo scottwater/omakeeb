@@ -1,0 +1,39 @@
+{
+  "sources": {
+    "via": "the-via/app@935106a990af39bdd1ade881c02366eac486240d src/utils/key.ts, advanced-keys.ts",
+    "vial": "vial-gui src/main/python/keycodes/keycodes_v5.py, keycodes_v6.py, any_keycode.py"
+  },
+  "via": [
+    [9, "MACRO(0)", 24338],
+    [10, "MACRO(0)", 24338],
+    [11, "MACRO(0)", 30466],
+    [12, "MACRO(0)", 30464],
+    [13, "MACRO(0)", 30464],
+    [10, "CUSTOM(0)", 24448],
+    [11, "CUSTOM(0)", 32512],
+    [12, "CUSTOM(0)", 32256],
+    [13, "CUSTOM(0)", 32256],
+    [10, "MT(MOD_LCTL,KC_A)", 24836],
+    [12, "MT(MOD_LCTL,KC_A)", 8452],
+    [12, "MT(MOD_RALT|MOD_RGUI,KC_ENT)", 15400],
+    [12, "LT(2,KC_SPC)", 16940],
+    [12, "OSM(MOD_LCTL|MOD_LSFT)", 21155],
+    [10, "LM(2,MOD_LCTL)", 22817],
+    [12, "LM(2,MOD_LCTL)", 20545],
+    [13, "UG_TOGG", 30752]
+  ],
+  "vial": [
+    [5, "M0", 24338],
+    [6, "M0", 30464],
+    [5, "KC_KP_1", 89],
+    [6, "KC_KP_ENTER", 88],
+    [5, "KC_BSPACE", 42],
+    [6, "KC_BSLASH", 49],
+    [5, "LT2(KC_SPACE)", 16940],
+    [6, "LCTL_T(KC_A)", 8452],
+    [5, "LCTL_T(KC_A)", 24836],
+    [5, "QK_CLEAR_EEPROM", 23775],
+    [6, "QK_CLEAR_EEPROM", 31747],
+    [6, "QK_REBOOT", 31745]
+  ]
+}

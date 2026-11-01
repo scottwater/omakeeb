@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Omakeeb application icon -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="#24283b"/>
+  <rect x="8" y="18" width="48" height="30" rx="5" fill="none" stroke="#7aa2f7" stroke-width="2"/>
+  <g fill="#c0caf5">
+    <rect x="13" y="24" width="6" height="5" rx="1"/><rect x="21" y="24" width="6" height="5" rx="1"/>
+    <rect x="29" y="24" width="6" height="5" rx="1"/><rect x="37" y="24" width="6" height="5" rx="1"/>
+    <rect x="45" y="24" width="6" height="5" rx="1"/>
+    <rect x="13" y="32" width="6" height="5" rx="1"/><rect x="21" y="32" width="6" height="5" rx="1"/>
+    <rect x="29" y="32" width="6" height="5" rx="1"/><rect x="37" y="32" width="6" height="5" rx="1"/>
+    <rect x="45" y="32" width="6" height="5" rx="1"/>
+    <rect x="21" y="40" width="22" height="3" rx="1"/>
+  </g>
+</svg>

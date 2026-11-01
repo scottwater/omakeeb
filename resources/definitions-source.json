@@ -1,0 +1,41 @@
+{
+  "source": "https://github.com/the-via/keyboards",
+  "commit": "9e3e9f4aa9f50f9439fdebc747560f51aaf109a0",
+  "license": "GPL-3.0",
+  "count": 2083,
+  "rejected": [
+    {
+      "path": "v3/akb/ogr.json",
+      "reason": "vendorId must be an integer"
+    },
+    {
+      "path": "v3/akb/ogrn.json",
+      "reason": "vendorId must be an integer"
+    },
+    {
+      "path": "v3/cybergear/macro25/mkmacro01.json",
+      "reason": "productId must be an integer"
+    },
+    {
+      "path": "v3/daji/seis_cinco/seis_cinco.json",
+      "reason": "vendorId must be an integer"
+    },
+    {
+      "path": "v3/sheubox/fallacy/fallacy.json",
+      "reason": "vendorId must be an integer"
+    },
+    {
+      "path": "v3/cipulot/ec_60x/ec_60x.json",
+      "reason": "Definition needs a valid name"
+    },
+    {
+      "path": "v3/cipulot/ec_65x/ec_65x.json",
+      "reason": "Definition needs a valid name"
+    },
+    {
+      "path": "v3/cipulot/hybrid_hhkb/hybrid_hhkb.json",
+      "reason": "Definition needs a valid name"
+    }
+  ],
+  "sha256": "ada84eff7f41c8ad9c11fcb10cb208d374e25d1cb2c3c78517a851e15947853f"
+}
