@@ -960,10 +960,14 @@ class Window(Gtk.ApplicationWindow):
                 row=box(css="card"); title=box(True,4); title.set_hexpand(True)
                 title.append(label(device.product or "QMK keyboard","title"))
                 title.append(label(f"{device.vendor_id:04X}:{device.product_id:04X} · {device.path}","small"))
+                if lacks_access(device):
+                    title.append(label("Omakeeb cannot open this keyboard. Run this once, then unplug and reconnect it:","warning",True))
+                    command=label(f"echo '{udev_rule(device)}' | sudo tee -a /etc/udev/rules.d/59-omakeeb.rules && sudo udevadm control --reload-rules","small",True)
+                    command.set_selectable(True); title.append(command)
                 row.append(title)
                 row.append(button("Connect",lambda d=device:(dialog.close(),self.connect_device(d))))
                 rows.append(row)
-        from .hid import enumerate_devices
+        from .hid import enumerate_devices, lacks_access, udev_rule
         self.run_worker(enumerate_devices,found)
         content.append(button("Close",dialog.close)); dialog.present()
 

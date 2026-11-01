@@ -82,7 +82,7 @@ Omakeeb has no firmware-flashing, bootloader-entry, factory-reset or EEPROM-eras
 
 ## Linux device permissions
 
-The application runs as your user. If it can see a keyboard but cannot open its HID interface, grant access to that model through a udev rule. Use the actual vendor and product IDs from the connection information, not a rule that permits all HID devices.
+The application runs as your user. If it can see a keyboard but cannot open its HID interface, grant access to that model through a udev rule. The connect dialog marks any keyboard it cannot open and shows the command for its rule. Use the actual vendor and product IDs from the connection information, not a rule that permits all HID devices.
 
 For example, an administrator can add a rule to `/etc/udev/rules.d/59-omakeeb.rules`:
 

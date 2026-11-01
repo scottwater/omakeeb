@@ -7,6 +7,7 @@ WebHID permissions, daemon, root process, or firmware flasher is required.
 from __future__ import annotations
 
 import ctypes as C
+import os
 import ctypes.util
 from dataclasses import asdict, dataclass
 import threading
@@ -165,5 +166,10 @@ class HidTransport:
 
 def udev_rule(info: DeviceInfo) -> str:
     """Suggested per-model rule; deliberately never installs it itself."""
-    return (f'SUBSYSTEM=="hidraw", ATTRS{{idVendor}}=="{info.vendor_id:04x}", '
-            f'ATTRS{{idProduct}}=="{info.product_id:04x}", TAG+="uaccess"')
+    return (f'KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{{idVendor}}=="{info.vendor_id:04x}", '
+            f'ATTRS{{idProduct}}=="{info.product_id:04x}", MODE="0660", TAG+="uaccess"')
+
+
+def lacks_access(info: DeviceInfo) -> bool:
+    """True when a hidraw node is listed but this user cannot open it."""
+    return info.path.startswith("/dev/") and not os.access(info.path, os.R_OK | os.W_OK)
