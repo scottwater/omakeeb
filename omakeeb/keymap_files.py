@@ -467,9 +467,14 @@ def _via_macro_expressions(snapshot):
     except ValueError as exc:
         raise KeymapFileError(f"VIA cannot preserve these macros: {exc}. Export Omakeeb or Vial format.") from exc
     result = []
-    for expression in expressions:
+    for index, expression in enumerate(expressions):
         parts = []
         for action, value in expression_actions(expression):
+            if action != "text" and parts and parts[-1] == "\\":
+                # VIA reads any brace after a backslash as literal text and
+                # has no backslash escape, so this sequence has no VIA form.
+                raise KeymapFileError(f"VIA cannot preserve macro {index}: a backslash directly before a key "
+                                      "action or delay would become literal text. Export Omakeeb or Vial format.")
             if action == "text":
                 parts.append("\\{" if value == "{" else value)
             elif action == "delay":

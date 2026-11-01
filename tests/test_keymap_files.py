@@ -280,6 +280,20 @@ class KeymapFilesTests(unittest.TestCase):
         export_keymap(self.path, imported, format="via")
         self.assertEqual(json.loads(self.path.read_text())["macros"], via["macros"])
 
+    def test_via_rejects_backslash_before_macro_action(self):
+        # VIA has no backslash escape: "\{KC_ENT}" would import as literal text.
+        self.path.write_text("existing file")
+        for expression in (r"\\{KC_ENT}", r"a\\{100}b", r"\\{+KC_LSFT}x{-KC_LSFT}"):
+            source = snapshot()
+            source["macro_buffer"] = encode([expression, ""], size=64).hex()
+            with self.assertRaisesRegex(ValueError, "VIA cannot preserve macro 0.*Omakeeb or Vial"):
+                export_keymap(self.path, source, format="via")
+            self.assertEqual(self.path.read_text(), "existing file")
+        source["macro_buffer"] = encode([r"\\\{{KC_ENT}", r"\\x{100}"], size=64).hex()
+        export_keymap(self.path, source, format="via")
+        self.assertEqual(json.loads(self.path.read_text())["macros"], ["\\\\{{KC_ENT}", "\\x{100}"])
+        self.assertEqual(import_keymap(self.path, source)["macro_buffer"], source["macro_buffer"])
+
     def test_via_rejects_extended_vial_macro_actions(self):
         source = snapshot(vial=True)
         source["macro_buffer"] = encode(["{LGUI(KC_E)}", ""], vial_protocol=6, size=64).hex()
