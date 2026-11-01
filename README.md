@@ -82,7 +82,7 @@ Omakeeb has no firmware-flashing, bootloader-entry, factory-reset or EEPROM-eras
 
 ## Linux device permissions
 
-The application runs as your user. If it can see a keyboard but cannot open its HID interface, grant access to that model through a udev rule. The connect dialog marks any keyboard it cannot open and shows the command for its rule. Use the actual vendor and product IDs from the connection information, not a rule that permits all HID devices.
+The application runs as your user. If it can see a keyboard but cannot open its HID interface, grant access to that model through a udev rule. The connect dialog marks any keyboard it cannot open. **Grant access** adds the rule for that model through your desktop's password prompt (`pkexec`); **Copy command** gives you the equivalent `sudo` command to run yourself. Use the actual vendor and product IDs from the connection information, not a rule that permits all HID devices.
 
 For example, an administrator can add a rule to `/etc/udev/rules.d/59-omakeeb.rules`:
 
@@ -90,7 +90,7 @@ For example, an administrator can add a rule to `/etc/udev/rules.d/59-omakeeb.ru
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="8968", ATTRS{idProduct}=="4e54", MODE="0660", TAG+="uaccess"
 ```
 
-Those IDs are an example, not a universal QMK identifier. After reloading udev rules, reconnect the keyboard. The `59-` prefix places the rule before the seat-access rules. Omakeeb does not install privileged rules or change system permissions automatically.
+Those IDs are an example, not a universal QMK identifier. After reloading udev rules, run `sudo udevadm trigger --subsystem-match=hidraw --action=change` or reconnect the keyboard. The `59-` prefix places the rule before the seat-access rules. Omakeeb never changes system permissions unless you choose Grant access.
 
 ## Development
 

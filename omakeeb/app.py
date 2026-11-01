@@ -960,16 +960,31 @@ class Window(Gtk.ApplicationWindow):
                 row=box(css="card"); title=box(True,4); title.set_hexpand(True)
                 title.append(label(device.product or "QMK keyboard","title"))
                 title.append(label(f"{device.vendor_id:04X}:{device.product_id:04X} · {device.path}","small"))
-                if lacks_access(device):
-                    title.append(label("Omakeeb cannot open this keyboard. Run this once, then unplug and reconnect it:","warning",True))
-                    command=label(f"echo '{udev_rule(device)}' | sudo tee -a /etc/udev/rules.d/59-omakeeb.rules && sudo udevadm control --reload-rules","small",True)
-                    command.set_selectable(True); title.append(command)
                 row.append(title)
-                row.append(button("Connect",lambda d=device:(dialog.close(),self.connect_device(d))))
+                if lacks_access(device):
+                    command=manual_grant_command(device)
+                    title.append(label("Linux needs a udev rule before Omakeeb can open this keyboard. Grant access adds one for this model and asks for your password. To do it yourself, run:","warning",True))
+                    shown=label(command,"small",True); shown.set_selectable(True); title.append(shown)
+                    actions=box(True,8); actions.set_valign(Gtk.Align.CENTER)
+                    actions.append(button("Grant access",lambda d=device:self.grant_access(dialog,d)))
+                    actions.append(button("Copy command",lambda c=command:self.get_clipboard().set(c)))
+                    row.append(actions)
+                else:
+                    row.append(button("Connect",lambda d=device:(dialog.close(),self.connect_device(d))))
                 rows.append(row)
-        from .hid import enumerate_devices, lacks_access, udev_rule
+        from .hid import enumerate_devices, lacks_access, manual_grant_command
         self.run_worker(enumerate_devices,found)
         content.append(button("Close",dialog.close)); dialog.present()
+
+    def grant_access(self,dialog,device):
+        import subprocess
+        from .hid import grant_command
+        def done(result):
+            if result.returncode==0:
+                dialog.close(); self._connect_dialog()
+            elif result.returncode!=126:  # 126: the password prompt was dismissed
+                self.alert("Access not granted",result.stderr.strip() or f"pkexec exited with status {result.returncode}.")
+        self.run_worker(lambda:subprocess.run(grant_command(device),capture_output=True,text=True),done)
 
     def connect_device(self,device,definition=None):
         self.session = None; self.draft = None; self.definition = None

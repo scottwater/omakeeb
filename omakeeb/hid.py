@@ -1,7 +1,8 @@
 """Small Linux HIDAPI binding. Opening a device never changes its configuration.
 
 Only QMK's vendor-defined raw-HID collection is eligible. No Python HID package,
-WebHID permissions, daemon, root process, or firmware flasher is required.
+WebHID permissions, daemon, root process, or firmware flasher is required. The
+one privileged step, adding a per-model udev rule, runs only when the user asks.
 """
 
 from __future__ import annotations
@@ -168,6 +169,22 @@ def udev_rule(info: DeviceInfo) -> str:
     """Suggested per-model rule; deliberately never installs it itself."""
     return (f'KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{{idVendor}}=="{info.vendor_id:04x}", '
             f'ATTRS{{idProduct}}=="{info.product_id:04x}", MODE="0660", TAG+="uaccess"')
+
+
+RULES_FILE = "/etc/udev/rules.d/59-omakeeb.rules"
+# Appends the rule once, then reapplies rules so no replug is needed.
+_GRANT_SCRIPT = ('{ grep -qxF "$1" "$2" 2>/dev/null || printf "%s\\n" "$1" >> "$2"; } && '
+                 'udevadm control --reload-rules && udevadm trigger --subsystem-match=hidraw --action=change && udevadm settle')
+
+
+def grant_command(info: DeviceInfo) -> list[str]:
+    """pkexec shows the desktop's password prompt; the rule is passed as data, never as shell text."""
+    return ["pkexec", "/bin/sh", "-c", _GRANT_SCRIPT, "sh", udev_rule(info), RULES_FILE]
+
+
+def manual_grant_command(info: DeviceInfo) -> str:
+    return (f"echo '{udev_rule(info)}' | sudo tee -a {RULES_FILE} && sudo udevadm control --reload-rules "
+            "&& sudo udevadm trigger --subsystem-match=hidraw --action=change")
 
 
 def lacks_access(info: DeviceInfo) -> bool:
