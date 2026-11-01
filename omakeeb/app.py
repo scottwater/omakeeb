@@ -430,15 +430,13 @@ class Window(Gtk.ApplicationWindow):
         if not self.draft:
             self.welcome()
             return
-        subtitles = {"Keymap":"Make every key yours. Select a key, then choose its new action.", "Macros":"Give a sequence of actions a single key.", "Lighting":"Set the mood with the controls your firmware exposes.", "Encoders":"A turn in the right direction. Map each rotation independently.", "Advanced":"Fine-tune the features provided by your keyboard’s firmware.", "Test keys":"Check what reaches the app, one key at a time.", "Backups":"A way back, before every change."}
+        subtitles = {"Keymap":"Select a key, then choose its new action.", "Macros":"Build key sequences and assign them to a key.", "Lighting":"Adjust the lighting controls your firmware exposes.", "Encoders":"Map each encoder rotation direction independently.", "Advanced":"Fine-tune the features provided by your keyboard’s firmware.", "Test keys":"Check what reaches the app, one key at a time.", "Backups":"Configuration backups are saved on connect and before each apply."}
         self.body.append(label(self.page, "heading"))
         self.body.append(label(subtitles[self.page], "muted", True))
         {"Keymap":self.keymap_page,"Macros":self.macros_page,"Lighting":self.lighting_page,"Encoders":self.encoders_page,"Advanced":self.advanced_page,"Test keys":self.test_page,"Backups":self.backups_page}[self.page]()
         self.update_footer()
 
     def welcome(self):
-        self.body.append(label("A little more you.\nIn every keystroke.", "heading"))
-        self.body.append(label("A native home for your QMK keyboard. Shape your layers, build shortcuts, and keep a copy of what worked.", "muted", True))
         card = box(True, 18, "card")
         card.append(label("Start with your keyboard", "title"))
         card.append(label("Connect a keyboard running VIA or Vial firmware. Omakeeb reads its current configuration and saves a backup before you edit.", wrap=True))
@@ -448,11 +446,6 @@ class Window(Gtk.ApplicationWindow):
         actions.append(button("Open saved profile…", self.open_profile_dialog))
         card.append(actions)
         self.body.append(card)
-        for title, detail in [("Works offline", "The bundled VIA library identifies supported boards. Vial boards supply their own layout."), ("At home in Omarchy", "Your active theme and desktop shortcuts, together in one workspace."), ("You decide when to write", "Edit a draft, review the changes, then apply. Configuration backups are saved automatically.")]:
-            row = box(True, 5, "card")
-            row.append(label(title,"title"))
-            row.append(label(detail,"muted",True))
-            self.body.append(row)
 
     def open_demo(self):
         def go():
