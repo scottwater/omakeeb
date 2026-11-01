@@ -221,6 +221,7 @@ class Window(Gtk.ApplicationWindow):
         self.layer = 0
         self.selected = None
         self.page = "Keymap"
+        self.palette_group = 0
         self.tested_codes = set()
         self.tested_matrix = set()
         self.matrix_testing = False
@@ -322,7 +323,7 @@ class Window(Gtk.ApplicationWindow):
         brand.append(label("⌨  omakeeb", "brand"))
         side.append(brand)
         self.nav_buttons = {}
-        sections = [("Keymap","input-keyboard-symbolic"), ("Omarchy","starred-symbolic"), ("Macros","view-list-symbolic"), ("Lighting","display-brightness-symbolic"), ("Encoders","view-refresh-symbolic"), ("Advanced","preferences-system-symbolic"), ("Test keys","object-select-symbolic"), ("Backups","document-save-symbolic")]
+        sections = [("Keymap","input-keyboard-symbolic"), ("Macros","view-list-symbolic"), ("Lighting","display-brightness-symbolic"), ("Encoders","view-refresh-symbolic"), ("Advanced","preferences-system-symbolic"), ("Test keys","object-select-symbolic"), ("Backups","document-save-symbolic")]
         for name, icon in sections:
             b = button(name, lambda n=name: self.navigate(n), "nav", icon)
             b.set_margin_start(12)
@@ -414,10 +415,10 @@ class Window(Gtk.ApplicationWindow):
         if not self.draft:
             self.welcome()
             return
-        subtitles = {"Keymap":"Make every key yours. Select a key, then choose its new action.", "Omarchy":"Put your desktop shortcuts exactly where you want them.", "Macros":"Give a sequence of actions a single key.", "Lighting":"Set the mood with the controls your firmware exposes.", "Encoders":"A turn in the right direction. Map each rotation independently.", "Advanced":"Fine-tune the features provided by your keyboard’s firmware.", "Test keys":"Check what reaches the app, one key at a time.", "Backups":"A way back, before every change."}
+        subtitles = {"Keymap":"Make every key yours. Select a key, then choose its new action.", "Macros":"Give a sequence of actions a single key.", "Lighting":"Set the mood with the controls your firmware exposes.", "Encoders":"A turn in the right direction. Map each rotation independently.", "Advanced":"Fine-tune the features provided by your keyboard’s firmware.", "Test keys":"Check what reaches the app, one key at a time.", "Backups":"A way back, before every change."}
         self.body.append(label(self.page, "heading"))
         self.body.append(label(subtitles[self.page], "muted", True))
-        {"Keymap":self.keymap_page,"Omarchy":self.omarchy_page,"Macros":self.macros_page,"Lighting":self.lighting_page,"Encoders":self.encoders_page,"Advanced":self.advanced_page,"Test keys":self.test_page,"Backups":self.backups_page}[self.page]()
+        {"Keymap":self.keymap_page,"Macros":self.macros_page,"Lighting":self.lighting_page,"Encoders":self.encoders_page,"Advanced":self.advanced_page,"Test keys":self.test_page,"Backups":self.backups_page}[self.page]()
         self.update_footer()
 
     def welcome(self):
@@ -507,22 +508,33 @@ class Window(Gtk.ApplicationWindow):
         self.body.append(editor)
         category_row = box()
         category_row.append(label("KEY GROUP", "eyebrow"))
-        categories = ["Keys", "All", "Media", "Layers", "Macros", "Lighting", "Mouse", "Audio", "System", "Custom"]
+        categories = ["Keys", "Omarchy", "All", "Media", "Layers", "Macros", "Lighting", "Mouse", "Audio", "System", "Custom"]
         self.palette_category = Gtk.DropDown.new_from_strings(categories)
+        self.palette_category.set_selected(self.palette_group)
         category_row.append(self.palette_category)
         self.body.append(category_row)
-        search = Gtk.SearchEntry(placeholder_text="Find a key, media action, layer, or macro…")
-        self.palette_category.connect("notify::selected", lambda *_: self.fill_palette(search.get_text()))
+        search = Gtk.SearchEntry(placeholder_text="Find a key, shortcut, layer, or macro…")
+        def group_changed(*_):
+            self.palette_group = self.palette_category.get_selected()
+            self.fill_palette(search.get_text())
+        self.palette_category.connect("notify::selected", group_changed)
         search.connect("search-changed", lambda e: self.fill_palette(e.get_text()))
         self.body.append(search)
         self.palette = Gtk.FlowBox(max_children_per_line=10, selection_mode=Gtk.SelectionMode.NONE, column_spacing=6, row_spacing=6)
         self.body.append(self.palette)
+        self.shortcut_rows = box(True, 8)
+        self.body.append(self.shortcut_rows)
+        self.shortcuts = discover_shortcuts()
         self.fill_palette("")
         self.update_selection()
 
     def fill_palette(self, query):
         clear(self.palette)
+        clear(self.shortcut_rows)
         category = self.palette_category.get_selected_item().get_string()
+        if category == "Omarchy":
+            self.fill_shortcuts(query)
+            return
         for code,title,short,tip in self.custom_codes():
             if category not in ("Custom","All") and not query:continue
             if query.lower() not in f"{title} {short} {tip}".lower():continue
@@ -566,31 +578,20 @@ class Window(Gtk.ApplicationWindow):
         self.update_selection()
         self.update_footer()
 
-    def omarchy_page(self):
-        self.body.append(label("Choose a destination in Keymap, then assign a shortcut here. Your desktop bindings are read, never changed.", "muted", True))
-        self.body.append(label(f"Destination: layer {self.layer}, row {self.selected[0]+1}, key {self.selected[1]+1}" if self.selected else "No destination selected yet", "status"))
-        entry = Gtk.SearchEntry(placeholder_text="Search your Omarchy shortcuts…")
-        self.body.append(entry)
-        rows = box(True,8)
-        self.body.append(rows)
-        shortcuts = discover_shortcuts()
-        def fill(query=""):
-            clear(rows)
-            for item in shortcuts:
-                chord = " + ".join((*item.modifiers, item.key))
-                if query.lower() not in f"{item.label} {item.category} {chord}".lower():
-                    continue
-                row = box(css="card")
-                info = box(True,4); info.set_hexpand(True)
-                info.append(label(item.label,"title"))
-                info.append(label(f"{item.category} · {chord}","muted"))
-                row.append(info)
-                b = button("Assign", lambda value=item.keycode:self.assign_code(value))
-                b.set_sensitive(item.keycode is not None and self.selected is not None)
-                b.set_tooltip_text(item.source if item.keycode is not None else "This binding cannot be represented by a single QMK keycode.")
-                row.append(b); rows.append(row)
-        entry.connect("search-changed",lambda e:fill(e.get_text()))
-        fill()
+    def fill_shortcuts(self, query):
+        """Desktop bindings keep a detailed row layout; their chords are hard to read as key legends."""
+        for item in self.shortcuts:
+            if query.lower() not in f"{item.label} {item.category} {item.chord}".lower():
+                continue
+            row = box(css="card")
+            info = box(True,4); info.set_hexpand(True)
+            info.append(label(item.label,"title"))
+            info.append(label(f"{item.category} · {item.chord}","muted"))
+            row.append(info)
+            b = button("Assign", lambda value=item.keycode:self.assign_code(value))
+            b.set_sensitive(item.keycode is not None)
+            b.set_tooltip_text(item.source if item.keycode is not None else "This binding cannot be represented by a single QMK keycode.")
+            row.append(b); self.shortcut_rows.append(row)
 
     def macro_protocol(self):
         return self.draft.current.get("via_protocol",12)

@@ -26,7 +26,7 @@ failures = []
 old_hook = sys.excepthook
 sys.excepthook = lambda typ,value,tb: (failures.append(str(value)),old_hook(typ,value,tb))
 output = Path(sys.argv[1]) if len(sys.argv)>1 else None
-pages = iter(['Keymap','Omarchy','Macros','Lighting','Encoders','Advanced','Test keys','Backups'])
+pages = iter(['Keymap','Macros','Lighting','Encoders','Advanced','Test keys','Backups'])
 loop = GLib.MainLoop()
 
 def snapshot(name):
@@ -99,6 +99,11 @@ def step():
             assert 'LGUI' in window.draft.changes()[0]
             window.undo()
             assert not window.draft.dirty
+            window.palette_category.set_selected(1)
+            assert window.palette_group==1 and window.shortcut_rows.get_first_child() and not window.palette.get_first_child()
+            window.select_layer(1)
+            assert window.palette_category.get_selected_item().get_string()=='Omarchy'
+            window.select_layer(0)
             exercise_editors()
         except Exception as error:
             failures.append(str(error))
