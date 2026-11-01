@@ -72,6 +72,9 @@ def padded(widget, value=24):
     return widget
 
 
+OMARCHY_LOGO = "\ue900"  # Logo glyph in the font Omarchy installs as "omarchy".
+
+
 class KeyboardCanvas(Gtk.DrawingArea):
     """KLE geometry with matrix-address selection and independent test marks."""
     def __init__(self, window):
@@ -98,9 +101,12 @@ class KeyboardCanvas(Gtk.DrawingArea):
         if row is None or not w.draft:
             return False
         layers = (w.draft.baseline if w.page == "Test keys" else w.draft.current)["layers"]
+        def describe(code):
+            shortcut = w.omarchy_shortcut(code)
+            return f"{w.key_name(code)} · {shortcut.label}" if shortcut else w.key_name(code)
         try:
-            lines = [w.key_name(layers[w.layer][row][col]), f"Layer {w.layer} · row {row + 1}, key {col + 1}"]
-            others = [f"{index}   {w.key_name(layer[row][col])}" for index, layer in enumerate(layers) if index != w.layer]
+            lines = [describe(layers[w.layer][row][col]), f"Layer {w.layer} · row {row + 1}, key {col + 1}"]
+            others = [f"{index}   {describe(layer[row][col])}" for index, layer in enumerate(layers) if index != w.layer]
         except (IndexError, TypeError):
             return False
         if others:
@@ -165,6 +171,7 @@ class KeyboardCanvas(Gtk.DrawingArea):
                 cr.restore()
                 continue
             tested = (code in w.tested_codes or (key.row,key.col) in w.tested_matrix) and w.page == "Test keys"
+            shortcut = w.omarchy_shortcut(code)
             cr.set_source_rgb(*color("accent" if selected else "green" if tested else "lighter_background", "#24283b"))
             radius = 5
             cr.new_sub_path()
@@ -172,14 +179,16 @@ class KeyboardCanvas(Gtk.DrawingArea):
                 cr.arc(cx,cy,radius,a,b)
             cr.close_path()
             cr.fill_preserve()
-            cr.set_source_rgba(*color("accent" if selected else "muted", "#414868"), .8)
-            cr.set_line_width(1)
+            # Keys that trigger an Omarchy shortcut get an accent outline and the shortcut's name.
+            cr.set_source_rgba(*color("accent" if selected or shortcut else "muted", "#414868"), .8)
+            cr.set_line_width(2 if shortcut else 1)
             cr.stroke()
             cr.set_source_rgb(*color("background" if selected or tested else "foreground", "#a9b1d6"))
+            logo = w.logo_font and shortcut and shortcut.label.casefold() == "omarchy menu"
             # Pango, unlike Cairo's toy text API, falls back to fonts with ▽ and other symbols.
-            layout = self.create_pango_layout(w.key_label(code))
-            font = Pango.FontDescription.from_string("sans-serif")
-            size, room = min(13, unit * .24), kw - 8
+            layout = self.create_pango_layout(OMARCHY_LOGO if logo else shortcut.label if shortcut else w.key_label(code))
+            font = Pango.FontDescription.from_string("omarchy" if logo else "sans-serif")
+            size, room = min(20 if logo else 13, unit * (.4 if logo else .24)), kw - 8
             # Shrink long legends a little, then ellipsize; the tooltip has the full mapping.
             while True:
                 font.set_absolute_size(size * Pango.SCALE)
@@ -222,6 +231,8 @@ class Window(Gtk.ApplicationWindow):
         self.selected = None
         self.page = "Keymap"
         self.palette_group = 0
+        self.shortcuts = discover_shortcuts()
+        self.logo_font = any(f.get_name().casefold() == "omarchy" for f in PangoCairo.FontMap.get_default().list_families())
         self.tested_codes = set()
         self.tested_matrix = set()
         self.matrix_testing = False
@@ -255,6 +266,9 @@ class Window(Gtk.ApplicationWindow):
             title=str(entry.get("name",f"Custom {index}"))[:100]
             result.append((code,title,str(entry.get("shortName",title))[:20],str(entry.get("title",title))[:240]))
         return result
+
+    def omarchy_shortcut(self,code):
+        return next((s for s in self.shortcuts if s.keycode==code),None)
 
     def key_name(self,code):
         for value,name,_short,_tip in self.custom_codes():

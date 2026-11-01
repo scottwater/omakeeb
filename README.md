@@ -39,7 +39,7 @@ Use `make uninstall`, or the installed `scripts/install.py uninstall` with the s
 ## Configure a keyboard
 
 1. Connect by USB and choose **Connect**. Omakeeb recognizes the VIA raw-HID interface, reads the firmware version and configuration, and saves an automatic backup before enabling edits.
-2. Choose a key and layer in **Keymap**, then select an action. The searchable palette includes ordinary keys, modifiers, layer functions, media keys and QMK codes. The **Omarchy** key group offers your current desktop bindings as single-key mappings.
+2. Choose a key and layer in **Keymap**, then select an action. The searchable palette includes ordinary keys, modifiers, layer functions, media keys and QMK codes. The **Omarchy** key group offers your current desktop bindings as single-key mappings, and keys that trigger one are outlined and labeled with its name.
 3. Edit macros, supported lighting controls, encoder directions or Vial advanced features. Changes stay in the draft. Undo and discard are available before applying.
 4. Review the changes and apply them. Omakeeb checks that the device still matches the original snapshot, saves another backup, and verifies the result by reading it back.
 5. Use **Test keys** to check the keyboard. The focused tester shows received keys and releases. Physical matrix testing reads switch positions where supported; Vial requires physical unlocking first. Hyprland may intercept desktop shortcuts in the focused tester. Tests use the applied mapping, not an unapplied draft.
