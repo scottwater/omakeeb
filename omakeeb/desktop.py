@@ -157,6 +157,9 @@ def shortcuts_from_binds(binds: list[dict]) -> list[Shortcut]:
     """
     result = []
     seen = set()
+    # Hyprland 0.56 reports Lua `code:N` binds with an empty key and keycode 0.
+    # Recover Omarchy's own defaults when both the description and modifiers match.
+    defaults = {(s.label, frozenset(s.modifiers)): s for s in default_shortcuts()}
     for bind in binds:
         if not isinstance(bind, dict) or bind.get("mouse") or bind.get("submap"):
             continue
@@ -173,6 +176,8 @@ def shortcuts_from_binds(binds: list[dict]) -> list[Shortcut]:
             continue
         physical = bind.get("keycode", 0)
         physical = physical if type(physical) is int else 0
+        if not key and not physical and (known := defaults.get((label, frozenset(mods)))):
+            key = known.key
         code = shortcut_keycode(mods, key, physical)
         if mask & ~(64 | 4 | 8 | 1) or bind.get("longPress"):
             code = None
@@ -200,6 +205,15 @@ def default_shortcuts() -> list[Shortcut]:
     for number in range(1, 11):
         definitions.append((f"Switch to workspace {number}", "SUPER", str(number % 10)))
         definitions.append((f"Move window to workspace {number}", "SUPER SHIFT", str(number % 10)))
+        definitions.append((f"Move window silently to workspace {number}", "SUPER SHIFT ALT", str(number % 10)))
+    for number in range(1, 10):
+        definitions.append((f"Switch to group window {number}", "SUPER ALT", str(number)))
+        definitions.append((f"Bar panel {number}", "SUPER CTRL", str(number)))
+    for suffix, extra in (("", ""), (" a little", " ALT"), (" a lot", " CTRL")):
+        definitions += [(f"Expand window left{suffix}", f"SUPER{extra}", "MINUS"), (f"Shrink window left{suffix}", f"SUPER{extra}", "EQUAL"),
+                        (f"Shrink window up{suffix}", f"SUPER SHIFT{extra}", "MINUS"), (f"Expand window down{suffix}", f"SUPER SHIFT{extra}", "EQUAL")]
+    definitions += [("Omarchy menu", "SUPER SHIFT", "F23"), ("Make webcam overlay smaller", "SUPER ALT", "BRACKETLEFT"),
+                    ("Make webcam overlay larger", "SUPER ALT", "BRACKETRIGHT")]
     for direction in ("LEFT", "RIGHT", "UP", "DOWN"):
         definitions.append((f"Focus {direction.lower()} window", "SUPER", direction))
     return [Shortcut(label, _category(label), tuple(mods.split()), key, shortcut_keycode(tuple(mods.split()), key))

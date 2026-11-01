@@ -71,6 +71,19 @@ class ShortcutTests(unittest.TestCase):
         self.assertIsNone(results['Long press'].keycode)
         self.assertIsNone(results['Unknown keysym'].keycode)
 
+    def test_lua_code_binds_without_a_key_recover_omarchy_defaults(self):
+        binds = [
+            {'description':'Switch to workspace 10','key':'','keycode':0,'modmask':64},
+            {'description':'Shrink window up a lot','key':'','keycode':0,'modmask':69},
+            {'description':'Switch to workspace 10','key':'','keycode':0,'modmask':4},
+            {'description':'My own code bind','key':'','keycode':0,'modmask':64},
+        ]
+        results = {(item.label, item.modifiers):item.keycode for item in shortcuts_from_binds(binds)}
+        self.assertEqual(results[('Switch to workspace 10',('SUPER',))], 0x0827)
+        self.assertEqual(results[('Shrink window up a lot',('SUPER','CTRL','SHIFT'))], 0x0b2d)
+        self.assertIsNone(results[('Switch to workspace 10',('CTRL',))])
+        self.assertIsNone(results[('My own code bind',('SUPER',))])
+
     def test_no_compositor_uses_defaults_without_process(self):
         with patch.dict('os.environ', {}, clear=True), patch('subprocess.run') as run:
             self.assertEqual(discover_shortcuts(), default_shortcuts())
