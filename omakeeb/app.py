@@ -158,16 +158,21 @@ class KeyboardCanvas(Gtk.DrawingArea):
             cr.set_line_width(1)
             cr.stroke()
             cr.set_source_rgb(*color("background" if selected or tested else "foreground", "#a9b1d6"))
-            title = w.key_label(code)
-            if len(title) > 11:
-                title = title[:10] + "…"
             # Pango, unlike Cairo's toy text API, falls back to fonts with ▽ and other symbols.
-            layout = self.create_pango_layout(title)
+            layout = self.create_pango_layout(w.key_label(code))
             font = Pango.FontDescription.from_string("sans-serif")
-            font.set_absolute_size(min(13, unit * .24) * Pango.SCALE)
-            layout.set_font_description(font)
-            _ink, extent = layout.get_pixel_extents()
-            cr.move_to(x+(kw-extent.width)/2, y+(kh-extent.height)/2)
+            size, room = min(13, unit * .24), kw - 8
+            # Shrink long legends a little, then ellipsize; the tooltip has the full mapping.
+            while True:
+                font.set_absolute_size(size * Pango.SCALE)
+                layout.set_font_description(font)
+                if layout.get_pixel_extents()[1].width <= room or size <= 9:
+                    break
+                size -= 1
+            layout.set_width(int(room * Pango.SCALE))
+            layout.set_ellipsize(Pango.EllipsizeMode.END)
+            layout.set_alignment(Pango.Alignment.CENTER)
+            cr.move_to(x+4, y+(kh-layout.get_pixel_extents()[1].height)/2)
             PangoCairo.show_layout(cr, layout)
             if changed:
                 cr.set_source_rgb(*color("background" if selected else "accent", "#7aa2f7"))
