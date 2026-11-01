@@ -88,7 +88,25 @@ class KeyboardCanvas(Gtk.DrawingArea):
         keys = Gtk.EventControllerKey()
         keys.connect("key-pressed", self.navigate_key)
         self.add_controller(keys)
-        self.set_tooltip_text("Select a key, then choose a mapping below. Arrow keys move the selection; Enter opens the keycode editor. Coordinates are the firmware’s matrix positions.")
+        self.set_has_tooltip(True)
+        self.connect("query-tooltip", self.tooltip)
+
+    def tooltip(self, _widget, x, y, keyboard, tooltip):
+        w = self.window
+        key = None if keyboard else hit_test(self.rects, x, y)
+        row, col = w.selected if keyboard and w.selected else (key.row, key.col) if key else (None, None)
+        if row is None or not w.draft:
+            return False
+        layers = (w.draft.baseline if w.page == "Test keys" else w.draft.current)["layers"]
+        try:
+            lines = [w.key_name(layers[w.layer][row][col]), f"Layer {w.layer} · row {row + 1}, key {col + 1}"]
+            others = [f"{index}   {w.key_name(layer[row][col])}" for index, layer in enumerate(layers) if index != w.layer]
+        except (IndexError, TypeError):
+            return False
+        if others:
+            lines += ["", "Other layers", *others]
+        tooltip.set_text("\n".join(lines))
+        return True
 
     def clicked(self, _gesture, _count, x, y):
         key = hit_test(self.rects, x, y)
@@ -236,6 +254,11 @@ class Window(Gtk.ApplicationWindow):
             title=str(entry.get("name",f"Custom {index}"))[:100]
             result.append((code,title,str(entry.get("shortName",title))[:20],str(entry.get("title",title))[:240]))
         return result
+
+    def key_name(self,code):
+        for value,name,_short,_tip in self.custom_codes():
+            if value==code:return name
+        return keycodes.name(code,protocol=self.code_version)
 
     def key_label(self,code):
         for value,_name,short,_tip in self.custom_codes():
