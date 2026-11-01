@@ -12,11 +12,13 @@ gi.require_version('Gtk','4.0')
 gi.require_version('Gdk','4.0')
 gi.require_version('Graphene','1.0')
 from gi.repository import Gtk, Gdk, GLib, Graphene
-from omakeeb.app import Application, Window
+from omakeeb.app import Application, Window, box
+from omakeeb.editors import lighting_editor
 from omakeeb.keycodes import parse
 from omakeeb.keymap_files import load_profile_bundle
 from omakeeb.model import Draft
 import tempfile
+from types import SimpleNamespace
 
 app = Application(True,non_unique=True)
 app.register(None)
@@ -85,7 +87,28 @@ def exercise_editors():
     assert len(dialogs)==1
     [b for b in descendants(dialogs[0],Gtk.Button) if b.get_label()=='Apply to demo'][0].emit('clicked')
     assert not window.draft.dirty
-    print('Exercised macros, validation, lighting, QMK settings, tap dance, self-contained export, and reviewed demo apply.')
+    vialrgb={'underglow_brightness':[180],'vialrgb_mode':[1,0,128,10,255,200]}
+    live=SimpleNamespace(session=SimpleNamespace(protocol=SimpleNamespace(lighting_specs={'vialrgb_mode':{'effects':[0,1,2],'brightness_max':200,'components':['Effect low byte','Effect high byte','Speed','Hue','Saturation','Brightness']}})),draft=Draft({'lighting':{'vialrgb_mode':vialrgb['vialrgb_mode']}}))
+    parent=box(True); lighting_editor(live,parent)
+    assert [d.get_selected() for d in descendants(parent,Gtk.DropDown)]==[1]
+    # Offline profiles have no firmware effect list: Vial RGB is read-only, other lighting stays editable.
+    window.session=None; window.offline=True; window.draft=Draft({**window.draft.current,'lighting':vialrgb})
+    window.navigate('Lighting')
+    assert not descendants(window.body,Gtk.DropDown)
+    assert any(l.get_label().startswith('Effect 1 · Speed 128') for l in descendants(window.body,Gtk.Label))
+    scales=descendants(window.body,Gtk.Scale)
+    assert len(scales)==1
+    scales[0].set_value(90)
+    assert window.draft.current['lighting']=={'underglow_brightness':[90],'vialrgb_mode':[1,0,128,10,255,200]}
+    # Profiles may carry any saved payload length; undecodable ones show raw bytes.
+    for payload,text in (([],'Saved bytes: none'),([1,0,128],'Saved bytes: 1 0 128'),([1,0,128,10,255,200,7],'Saved bytes: 1 0 128 10 255 200 7')):
+        window.draft=Draft({**window.draft.current,'lighting':{'underglow_brightness':[180],'vialrgb_mode':payload}})
+        window.navigate('Lighting')
+        assert not descendants(window.body,Gtk.DropDown)
+        assert text in [l.get_label() for l in descendants(window.body,Gtk.Label)]
+        descendants(window.body,Gtk.Scale)[0].set_value(90)
+        assert window.draft.current['lighting']=={'underglow_brightness':[90],'vialrgb_mode':payload}
+    print('Exercised macros, validation, lighting, offline Vial RGB, QMK settings, tap dance, self-contained export, and reviewed demo apply.')
 
 def step():
     try:

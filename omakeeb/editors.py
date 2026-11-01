@@ -99,6 +99,20 @@ def lighting_editor(window, parent):
         spec = specs.get(field, {})
         card = box(True, 12, "card")
         card.append(label(spec.get("title", field.replace("_", " ").title()), "title"))
+        if field == "vialrgb_mode" and "effects" not in spec:
+            # Offline profiles lack the firmware's effect list and brightness
+            # limit, so the saved bytes are shown and kept, never edited.
+            if len(values) == 6:
+                effect = values[0] + (values[1] << 8)
+                summary = (f"{'Off' if effect == 0 else f'Effect {effect}'} · Speed {values[2]} · Hue {values[3]} · "
+                           f"Saturation {values[4]} · Brightness {values[5]}")
+            else:
+                summary = "Saved bytes: " + (" ".join(map(str, values)) or "none")
+            card.append(label(summary, "mono", True))
+            card.append(label("Connect the keyboard to change Vial RGB. Its firmware reports the available effects and "
+                              "brightness limit. Saved values are kept unchanged.", "muted", True))
+            parent.append(card)
+            continue
         if field.endswith("_color") and len(values)==2:
             import colorsys
             from gi.repository import Gdk
