@@ -1,3 +1,5 @@
+![Repository social preview](assets/github-social-preview.png)
+
 # Omakeeb
 
 Omakeeb is a native GTK 4 application for configuring QMK keyboards on Omarchy. It uses the current Omarchy palette, discovers your live Hyprland shortcuts, and keeps edits in a local draft until you review and apply them.
