@@ -42,6 +42,22 @@ python3 scripts/install.py --data-home /path/to/data --bin-dir /path/to/bin
 
 Use `make uninstall`, or the installed `scripts/install.py uninstall` with the same path options, to remove the app and launcher. Backups, firmware archives, and imported keyboard definitions remain in place. The installer refuses to overwrite unrelated files.
 
+### Omarchy bar widget
+
+The repository is also an Omarchy shell plugin. It adds a keyboard icon to the bar that opens Omakeeb. The plugin is only a launcher; install the app as well:
+
+```sh
+omarchy plugin add https://github.com/scottwater/omakeeb --enable
+make -C ~/.config/omarchy/plugins/io.github.scottwater.omakeeb install
+```
+
+Clicking the icon before the app is installed shows a notification instead. To remove both, uninstall the app first, then the plugin:
+
+```sh
+make -C ~/.config/omarchy/plugins/io.github.scottwater.omakeeb uninstall
+omarchy plugin remove io.github.scottwater.omakeeb
+```
+
 ## Configure a keyboard
 
 1. Connect by USB and choose **Connect**. Omakeeb recognizes the VIA raw-HID interface, reads the firmware version and configuration, and saves an automatic backup before enabling edits.
