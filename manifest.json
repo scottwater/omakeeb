@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.scottwater.omakeeb",
   "name": "Omakeeb",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Scott Watermasysk",
   "license": "GPL-3.0-or-later",
   "description": "Configure VIA and Vial QMK keyboards from Omarchy, including mapping your Hyprland shortcuts to single keys.",
