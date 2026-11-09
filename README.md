@@ -12,7 +12,15 @@ The app talks directly to VIA- and Vial-enabled firmware through the system HID 
 
 ## Run or install
 
-On Omarchy, install the system dependencies if they are missing:
+On Omarchy, install with one command:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/scottwater/omakeeb/master/install.sh | bash
+```
+
+It installs any missing system packages (asking for your password through `sudo`), downloads this repository to a temporary folder, and installs the app for your user. Run it again to update. To remove the app, pipe it to `bash -s -- uninstall` instead.
+
+To work from a checkout, install the system dependencies if they are missing:
 
 ```sh
 omarchy pkg add python gtk4 python-gobject python-cairo hidapi
