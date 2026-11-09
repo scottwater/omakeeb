@@ -52,17 +52,16 @@ Use `make uninstall`, or the installed `scripts/install.py uninstall` with the s
 
 ### Omarchy bar widget
 
-The repository is also an Omarchy shell plugin. It adds a keyboard icon to the bar that opens Omakeeb. The plugin is only a launcher; install the app as well:
+The repository is also an Omarchy shell plugin. It adds a keyboard icon to the bar that opens Omakeeb:
 
 ```sh
 omarchy plugin add https://github.com/scottwater/omakeeb --enable
-make -C ~/.config/omarchy/plugins/io.github.scottwater.omakeeb install
 ```
 
-Clicking the icon before the app is installed shows a notification instead. To remove both, uninstall the app first, then the plugin:
+If the app isn't installed yet, clicking the icon opens a terminal and asks before running `install.sh` from the plugin folder. To remove both, uninstall the app first, then the plugin:
 
 ```sh
-make -C ~/.config/omarchy/plugins/io.github.scottwater.omakeeb uninstall
+~/.config/omarchy/plugins/io.github.scottwater.omakeeb/install.sh uninstall
 omarchy plugin remove io.github.scottwater.omakeeb
 ```
 
