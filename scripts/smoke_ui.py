@@ -14,7 +14,9 @@ gi.require_version('Graphene','1.0')
 from gi.repository import Gtk, Gdk, GLib, Graphene
 from omakeeb.app import Application, Window, box
 from omakeeb.editors import lighting_editor
-from omakeeb.keycodes import parse
+from omakeeb import macros
+from omakeeb.compose import ComposeEntry
+from omakeeb.keycodes import parse, macro_code
 from omakeeb.keymap_files import load_profile_bundle
 from omakeeb.model import Draft
 import tempfile
@@ -120,6 +122,18 @@ def step():
             window.assign_code(parse('LGUI(KC_E)'))
             assert window.draft.dirty
             assert 'LGUI' in window.draft.changes()[0]
+            window.undo()
+            assert not window.draft.dirty
+            window.compose_entries=[ComposeEntry(('m','s'),'😄','smile')]; window.compose_key='{KC_LSFT,KC_CAPS}'
+            window.palette_category.set_selected(2)
+            assert window.shortcut_rows.get_first_child() and not window.palette.get_first_child()
+            window.assign_compose('{KC_LSFT,KC_CAPS}ms')
+            data=window.draft.current
+            assert macros.decode(bytes.fromhex(data['macro_buffer']),data['macro_count'],protocol=window.macro_protocol(),vial_protocol=data.get('vial_protocol'))[0]=='{+KC_LSFT}{+KC_CAPS}{-KC_CAPS}{-KC_LSFT}ms'
+            window.selected=(0,2); window.assign_compose('{KC_LSFT,KC_CAPS}ms')
+            assert window.draft.current['layers'][0][0][2]==macro_code(0,data)  # reused, not a second slot
+            window.undo()
+            assert data['layers'][0][0][1]==macro_code(0,data)
             window.undo()
             assert not window.draft.dirty
             window.palette_category.set_selected(1)

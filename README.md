@@ -80,6 +80,7 @@ A board must already run compatible VIA or Vial firmware. Plain QMK firmware doe
 | Key overrides and alternate repeat keys | Supported Vial firmware versions |
 | QMK settings | Recognized Vial setting IDs, widths and ranges |
 | Omarchy shortcuts | Current described Hyprland bindings; curated defaults when Hyprland is unavailable |
+| Compose sequences | Entries from `~/.XCompose` (and its includes) assigned to one key as a macro that taps your Compose key, then the sequence |
 | Import/export | Native Omakeeb profiles, VIA JSON, Vial `.vil`, and verified automatic backups |
 
 Features absent from the firmware stay unavailable. Manufacturer-specific VIA menus and unknown settings are not guessed. Compile-time QMK features need a firmware build outside Omakeeb. Unknown numeric keycodes can be preserved; new bootloader, reset and EEPROM-clearing assignments are blocked.

@@ -16,7 +16,7 @@ gi.require_version("Pango", "1.0")
 gi.require_version("PangoCairo", "1.0")
 from gi.repository import Gdk, Gio, GLib, Gtk, Pango, PangoCairo
 
-from . import __version__, keycodes, macros
+from . import __version__, compose, keycodes, macros
 from .definitions import Catalog, demo_definition, load_definition, layout_choices, unpack_layout_options, pack_layout_options
 from .geometry import place_keys, hit_test
 from .desktop import load_theme, discover_shortcuts, shortcut_keycode
@@ -519,7 +519,7 @@ class Window(Gtk.ApplicationWindow):
         self.body.append(editor)
         category_row = box()
         category_row.append(label("KEY GROUP", "eyebrow"))
-        categories = ["Keys", "Omarchy", "All", "Media", "Layers", "Macros", "Lighting", "Mouse", "Audio", "System", "Custom"]
+        categories = ["Keys", "Omarchy", "Compose", "All", "Media", "Layers", "Macros", "Lighting", "Mouse", "Audio", "System", "Custom"]
         self.palette_category = Gtk.DropDown.new_from_strings(categories)
         self.palette_category.set_selected(self.palette_group)
         category_row.append(self.palette_category)
@@ -536,6 +536,8 @@ class Window(Gtk.ApplicationWindow):
         self.shortcut_rows = box(True, 8)
         self.body.append(self.shortcut_rows)
         self.shortcuts = discover_shortcuts()
+        self.compose_entries = compose.load_entries()
+        self.compose_key = compose.compose_key(compose.live_kb_options())
         self.fill_palette("")
         self.update_selection()
 
@@ -545,6 +547,9 @@ class Window(Gtk.ApplicationWindow):
         category = self.palette_category.get_selected_item().get_string()
         if category == "Omarchy":
             self.fill_shortcuts(query)
+            return
+        if category == "Compose":
+            self.fill_compose(query)
             return
         for code,title,short,tip in self.custom_codes():
             if category not in ("Custom","All") and not query:continue
@@ -574,7 +579,8 @@ class Window(Gtk.ApplicationWindow):
         except ValueError as error:
             self.alert("Check this keycode", str(error))
 
-    def assign_code(self, code):
+    def assign_code(self, code, also=None):
+        """`also` stages a related change (a macro) in the same undo step."""
         if self.busy:
             return
         if self.selected is None:
@@ -585,7 +591,10 @@ class Window(Gtk.ApplicationWindow):
         try: validate_new_keycode(code,self.draft.current["layers"][self.layer][r][c],self.draft.current)
         except SafetyError as error:
             self.alert("Protected firmware action",str(error)); return
-        self.draft.edit(lambda data: data["layers"][self.layer][r].__setitem__(c,code))
+        def edit(data):
+            if also: also(data)
+            data["layers"][self.layer][r][c] = code
+        self.draft.edit(edit)
         self.update_selection()
         self.update_footer()
 
@@ -602,6 +611,60 @@ class Window(Gtk.ApplicationWindow):
             b = button("Assign", lambda value=item.keycode:self.assign_code(value))
             b.set_tooltip_text(item.source)
             row.append(b); self.shortcut_rows.append(row)
+
+    def fill_compose(self, query):
+        if self.compose_key is None:
+            self.shortcut_rows.append(label("No Compose key found in Hyprland's kb_options, so these entries cannot be typed by a macro.","muted",True))
+        if not self.compose_entries:
+            self.shortcut_rows.append(label("No Compose entries found in ~/.XCompose.","muted",True))
+        for entry in self.compose_entries:
+            if query.lower() not in f"{entry.output} {entry.comment} {entry.sequence}".lower():
+                continue
+            row = box(css="card")
+            info = box(True,4); info.set_hexpand(True)
+            info.append(label(" · ".join(filter(None,(entry.output.replace("\n"," ")[:80], entry.comment))),"title"))
+            info.append(label(f"Compose · {entry.sequence}","muted"))
+            row.append(info)
+            expression = compose.macro_expression(entry, self.compose_key)
+            b = button("Assign", lambda value=expression:self.assign_compose(value))
+            b.set_sensitive(expression is not None)
+            b.set_tooltip_text(f"Macro: {expression}" if expression else "This sequence uses keys a macro cannot type.")
+            row.append(b); self.shortcut_rows.append(row)
+
+    def assign_compose(self, expression):
+        """Reuse a macro slot holding this expression, else fill the first empty one."""
+        if not self.draft or self.busy: return
+        if self.selected is None:
+            self.alert("Choose a key first", "Select a key in the Keymap tab, then choose the action to put there.")
+            return
+        data = self.draft.current
+        count = data.get("macro_count",0)
+        if not count:
+            self.alert("No macro slots", "This firmware does not expose writable macro slots.")
+            return
+        try:
+            buffer = bytes.fromhex(data["macro_buffer"])
+            dialect = dict(protocol=self.macro_protocol(), vial_protocol=data.get("vial_protocol"))
+            expressions = macros.decode(buffer, count, **dialect)
+            # Decoded form ({+KC_LSFT}…), so an identical existing slot is found and reused.
+            expression = macros.decode(macros.encode([expression], **dialect), 1, **dialect)[0]
+        except ValueError as error:
+            self.alert("Compose entry cannot be assigned", str(error))
+            return
+        pending = [self.macro_edits.get(i, e) for i, e in enumerate(expressions)]
+        if expression not in pending and "" not in pending:
+            self.alert("All macro slots are in use", "Clear a macro in Macros, then assign this entry again.")
+            return
+        slot = pending.index(expression if expression in pending else "")
+        expressions[slot] = expression
+        try:
+            encoded = macros.encode(expressions, size=len(buffer), **dialect)
+            code = keycodes.macro_code(slot, data)
+        except ValueError as error:
+            self.alert("Compose entry cannot be assigned", str(error))
+            return
+        self.macro_edits.pop(slot, None); self.macro_invalid.discard(slot)
+        self.assign_code(code, also=lambda d: d.__setitem__("macro_buffer", encoded.hex()))
 
     def macro_protocol(self):
         return self.draft.current.get("via_protocol",12)
